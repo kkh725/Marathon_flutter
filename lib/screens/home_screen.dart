@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../models/marathon.dart';
 import '../widgets/marathon_card.dart';
 import '../widgets/filter_chip_section.dart';
 import '../providers/marathon_provider.dart';
@@ -15,18 +16,39 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   String selectedFilter = '전체'; // 현재 선택된 필터
+  String _searchQuery = ''; // 검색어
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
+  }
+
+  // 검색어로 마라톤 목록 필터링
+  List<Marathon> _filterMarathons(List<Marathon> marathons) {
+    if (_searchQuery.isEmpty) return marathons;
+
+    final query = _searchQuery.toLowerCase();
+    return marathons.where((marathon) {
+      // 대회명 검색
+      if (marathon.name.toLowerCase().contains(query)) return true;
+      // 개최지 검색
+      if (marathon.location.toLowerCase().contains(query)) return true;
+      // 태그 검색
+      if (marathon.tags.any((tag) => tag.toLowerCase().contains(query))) return true;
+      return false;
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     // Provider에서 마라톤 목록 가져오기
-    final marathons = ref.watch(marathonProvider);
+    final allMarathons = ref.watch(marathonProvider);
+    // 검색어로 필터링된 목록
+    final marathons = _filterMarathons(allMarathons);
 
     return Scaffold(
       body: CustomScrollView(
@@ -158,6 +180,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         border: Border.all(color: Colors.grey[200]!),
                       ),
                       child: TextField(
+                        controller: _searchController,
+                        // 검색어 입력시 필터링
+                        onChanged: (value) {
+                          setState(() {
+                            _searchQuery = value;
+                          });
+                        },
                         decoration: InputDecoration(
                           hintText: '대회명, 도시 또는 키워드 검색',
                           hintStyle: TextStyle(
@@ -168,6 +197,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             Icons.search,
                             color: Colors.grey[400],
                           ),
+                          // 검색어 있을 때 X 버튼 표시
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: Icon(
+                                    Icons.clear,
+                                    color: Colors.grey[400],
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _searchController.clear();
+                                      _searchQuery = '';
+                                    });
+                                  },
+                                )
+                              : null,
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
@@ -326,20 +370,46 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
 
           // 마라톤 카드 목록 (스크롤 최적화된 SliverList)
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 24.0),
-                    child: MarathonCard(marathon: marathons[index]),
-                  );
-                },
-                childCount: marathons.length,
+          if (marathons.isEmpty)
+            // 검색 결과 없음 표시
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(48.0),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.search_off,
+                      size: 64,
+                      color: Colors.grey[300],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      '"$_searchQuery" 검색 결과가 없습니다',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[500],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 24.0),
+                      child: MarathonCard(marathon: marathons[index]),
+                    );
+                  },
+                  childCount: marathons.length,
+                ),
               ),
             ),
-          ),
 
           // 하단 여백
           const SliverToBoxAdapter(
