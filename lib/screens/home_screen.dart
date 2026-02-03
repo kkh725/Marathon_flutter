@@ -5,6 +5,7 @@ import '../widgets/marathon_card.dart';
 import '../widgets/filter_chip_section.dart';
 import '../providers/marathon_provider.dart';
 
+// 홈 화면 (Riverpod 상태 관리 사용)
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -13,7 +14,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  String selectedFilter = '전체';
+  String selectedFilter = '전체'; // 현재 선택된 필터
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -24,13 +25,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Provider에서 마라톤 목록 가져오기
     final marathons = ref.watch(marathonProvider);
 
     return Scaffold(
       body: CustomScrollView(
         controller: _scrollController,
         slivers: [
-          // App Bar
+          // 상단 앱바 (블러 효과)
           SliverAppBar(
             floating: true,
             snap: true,
@@ -110,7 +112,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ],
           ),
 
-          // Hero Section
+          // 히어로 섹션 (타이틀 + 검색바 + 통계)
           SliverToBoxAdapter(
             child: Container(
               decoration: BoxDecoration(
@@ -148,7 +150,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 32),
-                    // Search Bar
+                    // 검색 입력창
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.grey[50],
@@ -175,7 +177,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 32),
-                    // Stats
+                    // 통계 정보 (대회 수 / 커뮤니티 규모)
                     Row(
                       children: [
                         Column(
@@ -235,10 +237,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
 
-          // Filter Section
+          // 필터 섹션 (가로 스크롤)
           SliverToBoxAdapter(
             child: FilterChipSection(
               selectedFilter: selectedFilter,
+              // 필터 선택시 상태 업데이트
               onFilterChanged: (filter) {
                 setState(() {
                   selectedFilter = filter;
@@ -247,7 +250,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
 
-          // Results Header
+          // 결과 헤더 (개수 표시 + 상세필터 버튼)
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 15),
@@ -322,7 +325,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
 
-          // Marathon Cards List
+          // 마라톤 카드 목록 (스크롤 최적화된 SliverList)
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             sliver: SliverList(
@@ -338,7 +341,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
 
-          // Bottom Spacing
+          // 하단 여백
           const SliverToBoxAdapter(
             child: SizedBox(height: 100),
           ),

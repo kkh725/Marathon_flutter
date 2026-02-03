@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/marathon.dart';
 
+// 마라톤 목록 Provider (전역 상태 관리)
 final marathonProvider = Provider<List<Marathon>>((ref) {
   // Mock data - 실제로는 API나 로컬 DB에서 가져옴
   return [

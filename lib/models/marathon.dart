@@ -2,6 +2,7 @@ import 'package:hive_ce/hive.dart';
 
 part 'marathon.g.dart';
 
+// 마라톤 대회 정보 모델 (Hive DB 저장용)
 @HiveType(typeId: 0)
 class Marathon {
   @HiveField(0)
@@ -75,6 +76,7 @@ class Marathon {
     required this.officialUrl,
   });
 
+  // JSON -> Marathon 객체 변환
   factory Marathon.fromJson(Map<String, dynamic> json) {
     return Marathon(
       id: json['id'],
@@ -83,9 +85,11 @@ class Marathon {
       date: DateTime.parse(json['date']),
       regDate: json['regDate'],
       distance: List<String>.from(json['distance']),
+      // enum 문자열을 EntryMethod로 변환
       entryMethod: EntryMethod.values.firstWhere(
         (e) => e.toString().split('.').last == json['entryMethod'],
       ),
+      // enum 문자열을 Difficulty로 변환
       difficulty: Difficulty.values.firstWhere(
         (e) => e.toString().split('.').last == json['difficulty'],
       ),
@@ -101,6 +105,7 @@ class Marathon {
     );
   }
 
+  // Marathon 객체 -> JSON 변환
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -124,6 +129,7 @@ class Marathon {
   }
 }
 
+// 접수 방식 enum
 @HiveType(typeId: 1)
 enum EntryMethod {
   @HiveField(0)
@@ -136,6 +142,7 @@ enum EntryMethod {
   qualifying, // 기록컷
 }
 
+// 대회 난이도 enum
 @HiveType(typeId: 2)
 enum Difficulty {
   @HiveField(0)
@@ -148,6 +155,7 @@ enum Difficulty {
   advanced, // 기록용
 }
 
+// 접수 방식 한글 표시명 반환
 extension EntryMethodExtension on EntryMethod {
   String get displayName {
     switch (this) {
@@ -161,6 +169,7 @@ extension EntryMethodExtension on EntryMethod {
   }
 }
 
+// 난이도 한글 표시명 반환
 extension DifficultyExtension on Difficulty {
   String get displayName {
     switch (this) {

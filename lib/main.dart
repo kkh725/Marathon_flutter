@@ -7,15 +7,16 @@ import 'screens/home_screen.dart';
 import 'models/marathon.dart';
 
 void main() async {
+  // Flutter 엔진 초기화
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Hive
+  // Hive 로컬 DB 초기화 및 어댑터 등록
   await Hive.initFlutter();
   Hive.registerAdapter(MarathonAdapter());
   Hive.registerAdapter(EntryMethodAdapter());
   Hive.registerAdapter(DifficultyAdapter());
 
-  // System UI
+  // 상태바/네비게이션바 스타일 설정
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -25,6 +26,7 @@ void main() async {
     ),
   );
 
+  // Riverpod Provider로 앱 실행
   runApp(
     const ProviderScope(
       child: MarathonApp(),
@@ -32,6 +34,7 @@ void main() async {
   );
 }
 
+// 앱 루트 위젯
 class MarathonApp extends StatelessWidget {
   const MarathonApp({super.key});
 
@@ -40,13 +43,14 @@ class MarathonApp extends StatelessWidget {
     return MaterialApp(
       title: 'K-RUN GLOBAL',
       debugShowCheckedModeBanner: false,
+      // Material3 기반 테마 설정
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF2563EB),
           brightness: Brightness.light,
         ),
-        textTheme: GoogleFonts.notoSansKrTextTheme(),
+        textTheme: GoogleFonts.notoSansKrTextTheme(), // 한글 폰트 적용
         scaffoldBackgroundColor: Colors.white,
         appBarTheme: const AppBarTheme(
           elevation: 0,

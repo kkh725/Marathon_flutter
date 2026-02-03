@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../models/marathon.dart';
 import 'package:intl/intl.dart';
 
+// 마라톤 대회 정보 카드 위젯
 class MarathonCard extends StatelessWidget {
   final Marathon marathon;
 
@@ -13,6 +14,7 @@ class MarathonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 카드 컨테이너 스타일 설정
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -29,13 +31,14 @@ class MarathonCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image Section
+          // 상단 이미지 영역
           ClipRRect(
             borderRadius: const BorderRadius.vertical(
               top: Radius.circular(24),
             ),
             child: Stack(
               children: [
+                // 네트워크 이미지 캐싱 처리
                 AspectRatio(
                   aspectRatio: 16 / 9,
                   child: CachedNetworkImage(
@@ -53,7 +56,7 @@ class MarathonCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Difficulty Badge
+                // 난이도 뱃지 (좌상단)
                 Positioned(
                   top: 12,
                   left: 12,
@@ -76,7 +79,7 @@ class MarathonCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Suitability Badge
+                // 적합도 뱃지 (우상단)
                 Positioned(
                   top: 12,
                   right: 12,
@@ -112,13 +115,13 @@ class MarathonCard extends StatelessWidget {
             ),
           ),
 
-          // Content Section
+          // 콘텐츠 영역 (제목, 위치, 정보 등)
           Padding(
             padding: const EdgeInsets.all(20.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Title
+                // 대회명
                 Text(
                   marathon.name,
                   style: const TextStyle(
@@ -130,7 +133,7 @@ class MarathonCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 8),
-                // Location
+                // 개최지
                 Row(
                   children: [
                     Icon(
@@ -151,7 +154,7 @@ class MarathonCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // Info Grid
+                // 대회일/접수/이동 정보 그리드
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -182,7 +185,7 @@ class MarathonCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // Tags
+                // 태그 목록 (최대 2개)
                 Wrap(
                   spacing: 6,
                   runSpacing: 6,
@@ -209,7 +212,7 @@ class MarathonCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // CTA Button
+                // 상세보기 버튼
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -249,6 +252,7 @@ class MarathonCard extends StatelessWidget {
     );
   }
 
+  // 정보 행 위젯 (아이콘 + 라벨 + 값)
   Widget _buildInfoRow({
     required IconData icon,
     required String label,
@@ -282,6 +286,7 @@ class MarathonCard extends StatelessWidget {
     );
   }
 
+  // 난이도별 색상 반환 (입문:녹색, 중급:주황, 기록용:빨강)
   Color _getDifficultyColor(Difficulty difficulty) {
     switch (difficulty) {
       case Difficulty.beginner:
