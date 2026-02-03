@@ -21,7 +21,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    // 스크롤 시 키보드 내리고 포커스 해제
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    FocusScope.of(context).unfocus();
+  }
+
+  @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
@@ -50,8 +62,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // 검색어로 필터링된 목록
     final marathons = _filterMarathons(allMarathons);
 
-    return Scaffold(
-      body: CustomScrollView(
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        body: CustomScrollView(
         controller: _scrollController,
         slivers: [
           // 상단 앱바 (블러 효과)
@@ -416,6 +430,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: SizedBox(height: 100),
           ),
         ],
+      ),
       ),
     );
   }
