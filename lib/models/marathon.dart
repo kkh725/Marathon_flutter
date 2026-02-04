@@ -76,6 +76,45 @@ class Marathon {
     required this.officialUrl,
   });
 
+  // AIMS JSON -> Marathon 객체 변환
+  factory Marathon.fromAimsJson(Map<String, dynamic> json, int index) {
+    final distances = (json['distances'] as List<dynamic>?)?.map((d) {
+      switch (d) {
+        case 'FULL':
+          return '풀';
+        case 'HALF':
+          return '하프';
+        default:
+          return d.toString();
+      }
+    }).toList() ?? [];
+
+    final countryCode = json['country_code'] ?? '';
+    final city = json['city'] ?? '';
+    final location = city.isNotEmpty ? '$city, $countryCode' : countryCode;
+
+    return Marathon(
+      id: 'aims-$index',
+      name: json['event_name'] ?? '',
+      location: location,
+      date: DateTime.parse(json['start_date']),
+      regDate: json['end_date'] != json['start_date']
+          ? '${json['start_date']} ~ ${json['end_date']}'
+          : '',
+      distance: distances,
+      entryMethod: EntryMethod.firstCome,
+      difficulty: Difficulty.beginner,
+      suitability: 3,
+      accessibility: '',
+      jetLag: '',
+      accommodation: '',
+      image: '',
+      tags: distances,
+      visaInfo: '',
+      officialUrl: json['aims_url'] ?? '',
+    );
+  }
+
   // JSON -> Marathon 객체 변환
   factory Marathon.fromJson(Map<String, dynamic> json) {
     return Marathon(

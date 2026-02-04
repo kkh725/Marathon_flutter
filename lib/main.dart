@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'screens/home_screen.dart';
 import 'models/marathon.dart';
+import 'services/marathon_init_service.dart';
 
 void main() async {
   // Flutter 엔진 초기화
@@ -15,6 +16,14 @@ void main() async {
   Hive.registerAdapter(MarathonAdapter());
   Hive.registerAdapter(EntryMethodAdapter());
   Hive.registerAdapter(DifficultyAdapter());
+
+  // AIMS 마라톤 데이터 초기화 (최초 1회만 실행)
+  await MarathonInitService.initialize();
+
+  // 초기화 후 Box가 닫혀있을 수 있으므로 열어두기
+  if (!Hive.isBoxOpen(MarathonInitService.boxName)) {
+    await Hive.openBox<Marathon>(MarathonInitService.boxName);
+  }
 
   // 상태바/네비게이션바 스타일 설정
   SystemChrome.setSystemUIOverlayStyle(
