@@ -38,23 +38,28 @@ class MarathonCard extends StatelessWidget {
             ),
             child: Stack(
               children: [
-                // 네트워크 이미지 캐싱 처리
+                // 이미지 표시 (URL이 있으면 네트워크, 없으면 기본 이미지)
                 AspectRatio(
                   aspectRatio: 16 / 9,
-                  child: CachedNetworkImage(
-                    imageUrl: marathon.image,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      color: Colors.grey[200],
-                      child: const Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      color: Colors.grey[200],
-                      child: const Icon(Icons.error),
-                    ),
-                  ),
+                  child: marathon.image.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: marathon.image,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: Colors.grey[200],
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Image.asset(
+                            'assets/images/default_marathon.png',
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : Image.asset(
+                          'assets/images/default_marathon.png',
+                          fit: BoxFit.cover,
+                        ),
                 ),
                 // 난이도 뱃지 (좌상단)
                 Positioned(
