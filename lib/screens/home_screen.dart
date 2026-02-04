@@ -17,6 +17,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   String selectedFilter = '전체'; // 현재 선택된 필터
   String _searchQuery = ''; // 검색어
+  bool _showScrollToTop = false; // 맨 위로 버튼 표시 여부
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
 
@@ -29,6 +30,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _onScroll() {
     FocusScope.of(context).unfocus();
+    // 200px 이상 스크롤하면 맨 위로 버튼 표시
+    final show = _scrollController.offset > 200;
+    if (show != _showScrollToTop) {
+      setState(() {
+        _showScrollToTop = show;
+      });
+    }
   }
 
   @override
@@ -65,6 +73,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
+        // 맨 위로 가기 버튼
+        floatingActionButton: AnimatedOpacity(
+          opacity: _showScrollToTop ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 200),
+          child: FloatingActionButton.small(
+            onPressed: () {
+              _scrollController.animateTo(
+                0,
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeOut,
+              );
+            },
+            backgroundColor: const Color(0xFF2563EB),
+            child: const Icon(Icons.arrow_upward, color: Colors.white),
+          ),
+        ),
         body: CustomScrollView(
         controller: _scrollController,
         slivers: [
