@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/marathon.dart';
 import 'package:intl/intl.dart';
 
@@ -84,37 +85,11 @@ class MarathonCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                // 적합도 뱃지 (우상단)
+                // D-day 뱃지 (우상단)
                 Positioned(
                   top: 12,
                   right: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.star,
-                          size: 14,
-                          color: Color(0xFFFBBF24),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${marathon.suitability}.0',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  child: _buildDdayBadge(),
                 ),
               ],
             ),
@@ -147,12 +122,16 @@ class MarathonCard extends StatelessWidget {
                       color: Colors.grey[400],
                     ),
                     const SizedBox(width: 4),
-                    Text(
-                      marathon.location,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w500,
+                    Expanded(
+                      child: Text(
+                        marathon.location,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -174,27 +153,43 @@ class MarathonCard extends StatelessWidget {
                         value: DateFormat('yyyy.MM.dd').format(marathon.date),
                       ),
                       const SizedBox(height: 12),
-                      _buildInfoRow(
-                        icon: Icons.how_to_reg_outlined,
-                        label: '접수',
-                        value: marathon.regDate,
+                      GestureDetector(
+                        onTap: marathon.regDate.isNotEmpty
+                            ? () => launchUrl(Uri.parse(marathon.regDate))
+                            : null,
+                        child: _buildInfoRow(
+                          icon: Icons.how_to_reg_outlined,
+                          label: '접수',
+                          value: marathon.regDate.isNotEmpty ? '바로가기' : '-',
+                          isLink: marathon.regDate.isNotEmpty,
+                        ),
                       ),
-                      const SizedBox(height: 12),
-                      _buildInfoRow(
-                        icon: Icons.flight_outlined,
-                        label: '이동',
-                        value: marathon.accessibility,
-                      ),
+                      if (marathon.price.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        _buildInfoRow(
+                          icon: Icons.payments_outlined,
+                          label: '참가비',
+                          value: marathon.price,
+                        ),
+                      ],
+                      if (marathon.accessibility.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        _buildInfoRow(
+                          icon: Icons.flight_outlined,
+                          label: '이동',
+                          value: marathon.accessibility,
+                        ),
+                      ],
                     ],
                   ),
                 ),
                 const SizedBox(height: 16),
 
-                // 태그 목록 (최대 2개)
+                // 태그 목록 (최대 4개)
                 Wrap(
                   spacing: 6,
                   runSpacing: 6,
-                  children: marathon.tags.take(2).map((tag) {
+                  children: marathon.tags.where((tag) => tag.isNotEmpty).take(4).map((tag) {
                     return Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
@@ -262,6 +257,7 @@ class MarathonCard extends StatelessWidget {
     required IconData icon,
     required String label,
     required String value,
+    bool isLink = false,
   }) {
     return Row(
       children: [
@@ -279,19 +275,68 @@ class MarathonCard extends StatelessWidget {
             fontWeight: FontWeight.w500,
           ),
         ),
-        const Spacer(),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
+        const SizedBox(width: 12),
+        Flexible(
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: isLink ? const Color(0xFF2563EB) : null,
+              decoration: isLink ? TextDecoration.underline : null,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.end,
           ),
         ),
       ],
     );
   }
 
-  // 난이도별 색상 반환 (입문:녹색, 중급:주황, 기록용:빨강)
+  // D-day 뱃지 위젯
+  Widget _buildDdayBadge() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final raceDay = DateTime(marathon.date.year, marathon.date.month, marathon.date.day);
+    final diff = raceDay.difference(today).inDays;
+
+    final String label;
+    final Color bgColor;
+    final Color textColor;
+
+    if (diff > 0) {
+      label = 'D-$diff';
+      bgColor = const Color(0xFF2563EB);
+      textColor = Colors.white;
+    } else if (diff == 0) {
+      label = 'D-Day';
+      bgColor = const Color(0xFFEF4444);
+      textColor = Colors.white;
+    } else {
+      label = '종료';
+      bgColor = Colors.grey[600]!;
+      textColor = Colors.white;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          color: textColor,
+        ),
+      ),
+    );
+  }
+
+  // 난이도별 색상 반환 (입문:녹색, 중급:주황, 상급:빨강, 극한:보라)
   Color _getDifficultyColor(Difficulty difficulty) {
     switch (difficulty) {
       case Difficulty.beginner:
@@ -300,6 +345,8 @@ class MarathonCard extends StatelessWidget {
         return const Color(0xFFF59E0B);
       case Difficulty.advanced:
         return const Color(0xFFEF4444);
+      case Difficulty.extreme:
+        return const Color(0xFF7C3AED);
     }
   }
 }

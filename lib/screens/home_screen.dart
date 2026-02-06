@@ -21,10 +21,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
 
+  static const int _pageSize = 20;
+  int _displayCount = _pageSize; // 현재 표시 개수
+  bool _isLoadingMore = false; // 추가 로딩 중 여부
+
   @override
   void initState() {
     super.initState();
-    // 스크롤 시 키보드 내리고 포커스 해제
     _scrollController.addListener(_onScroll);
   }
 
@@ -37,6 +40,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         _showScrollToTop = show;
       });
     }
+
+    // 하단 근처 도달 시 추가 로드
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 300) {
+      _loadMore();
+    }
+  }
+
+  Future<void> _loadMore() async {
+    if (_isLoadingMore) return;
+
+    final allMarathons = ref.read(marathonProvider);
+    final filtered = _filterMarathons(allMarathons);
+    if (_displayCount >= filtered.length) return;
+
+    setState(() => _isLoadingMore = true);
+
+    // API 호출 느낌의 딜레이
+    await Future.delayed(const Duration(milliseconds: 600));
+
+    if (!mounted) return;
+    setState(() {
+      _displayCount = (_displayCount + _pageSize).clamp(0, filtered.length);
+      _isLoadingMore = false;
+    });
   }
 
   @override
@@ -69,6 +97,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final allMarathons = ref.watch(marathonProvider);
     // 검색어로 필터링된 목록
     final marathons = _filterMarathons(allMarathons);
+    // 실제 표시할 개수
+    final visibleCount = _displayCount.clamp(0, marathons.length);
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -219,10 +249,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       child: TextField(
                         controller: _searchController,
-                        // 검색어 입력시 필터링
+                        // 검색어 입력시 필터링 + 페이지 초기화
                         onChanged: (value) {
                           setState(() {
                             _searchQuery = value;
+                            _displayCount = _pageSize;
                           });
                         },
                         decoration: InputDecoration(
@@ -246,6 +277,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     setState(() {
                                       _searchController.clear();
                                       _searchQuery = '';
+                                      _displayCount = _pageSize;
                                     });
                                   },
                                 )
@@ -444,7 +476,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       child: MarathonCard(marathon: marathons[index]),
                     );
                   },
-                  childCount: marathons.length,
+                  childCount: visibleCount,
+                ),
+              ),
+            ),
+
+          // 로딩 인디케이터
+          if (_isLoadingMore)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 32),
+                child: Center(
+                  child: SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      color: Color(0xFF2563EB),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+          // 모두 불러옴 표시
+          if (!_isLoadingMore && visibleCount >= marathons.length && marathons.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Center(
+                  child: Text(
+                    '모든 대회를 불러왔습니다',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[400],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
               ),
             ),

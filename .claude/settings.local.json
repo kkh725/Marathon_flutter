@@ -8,7 +8,8 @@
       "WebFetch(domain:worldsmarathons.com)",
       "WebFetch(domain:marathonguide.com)",
       "Bash(tree:*)",
-      "WebSearch"
+      "WebSearch",
+      "WebFetch(domain:unsplash.com)"
     ]
   }
 }

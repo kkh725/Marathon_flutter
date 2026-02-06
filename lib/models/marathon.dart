@@ -1,4 +1,5 @@
 import 'package:hive_ce/hive.dart';
+import '../constants/marathon_images.dart';
 
 part 'marathon.g.dart';
 
@@ -56,6 +57,12 @@ class Marathon {
   @HiveField(16)
   final String officialUrl;
 
+  @HiveField(17)
+  final String price;
+
+  @HiveField(18)
+  final String countryCode;
+
   Marathon({
     required this.id,
     required this.name,
@@ -74,7 +81,64 @@ class Marathon {
     this.recommendationReason,
     required this.visaInfo,
     required this.officialUrl,
+    required this.price,
+    required this.countryCode,
   });
+
+  // courseDifficulty(한글) → Difficulty enum 매핑
+  static const _difficultyMap = <String, Difficulty>{
+    '평평해요': Difficulty.beginner,
+    '조금 출렁여요': Difficulty.intermediate,
+    '언덕이 많아요': Difficulty.advanced,
+    '한계에 가까워요': Difficulty.extreme,
+  };
+
+  static const _defaultImageHost = 'wmimg.azureedge.net';
+
+  // 기본 이미지이거나 비어있으면 Unsplash 이미지 배정
+  static String _pickImage(String imageUrl, int index) {
+    if (imageUrl.isEmpty || imageUrl.contains(_defaultImageHost)) {
+      return marathonImageUrls[index % marathonImageUrls.length];
+    }
+    return imageUrl;
+  }
+
+  // worldsmarathons.com parsed JSON → Marathon 객체 변환 (한글 원본 그대로 사용)
+  factory Marathon.fromParsedJson(Map<String, dynamic> json, int index) {
+    final raceTypeLabel = json['raceTypeLabel'] as String? ?? '';
+    final uniqueDistances = (json['uniqueDistances'] as List<dynamic>?)
+            ?.map((d) => d.toString())
+            .toList() ??
+        [];
+    final tags = (json['tags'] as List<dynamic>?)
+            ?.map((t) => t.toString())
+            .toList() ??
+        [];
+
+    final difficultyRaw = (json['courseDifficulty'] as String? ?? '').trim();
+    final difficulty = _difficultyMap[difficultyRaw] ?? Difficulty.intermediate;
+
+    return Marathon(
+      id: json['id'] ?? 'parsed-$index',
+      name: json['title'] ?? '',
+      location: json['location'] as String? ?? '',
+      date: DateTime.parse(json['dateNextRace'] ?? json['firstRaceDate']),
+      regDate: json['website'] ?? '',
+      distance: [raceTypeLabel, ...uniqueDistances],
+      entryMethod: EntryMethod.firstCome,
+      difficulty: difficulty,
+      suitability: 3,
+      accessibility: '',
+      jetLag: '',
+      accommodation: '',
+      image: _pickImage(json['image'] as String? ?? '', index),
+      tags: [raceTypeLabel, if ((json['surface'] as String? ?? '').isNotEmpty) json['surface'] as String, ...tags],
+      visaInfo: '',
+      officialUrl: json['selfLink'] ?? '',
+      price: json['minPriceFormatted'] as String? ?? '',
+      countryCode: json['countryCode'] as String? ?? '',
+    );
+  }
 
   // AIMS JSON -> Marathon 객체 변환
   factory Marathon.fromAimsJson(Map<String, dynamic> json, int index) {
@@ -112,6 +176,8 @@ class Marathon {
       tags: distances,
       visaInfo: '',
       officialUrl: json['aims_url'] ?? '',
+      price: '',
+      countryCode: json['country_code'] ?? '',
     );
   }
 
@@ -141,6 +207,8 @@ class Marathon {
       recommendationReason: json['recommendationReason'],
       visaInfo: json['visaInfo'],
       officialUrl: json['officialUrl'],
+      price: json['price'] ?? '',
+      countryCode: json['countryCode'] ?? '',
     );
   }
 
@@ -164,6 +232,8 @@ class Marathon {
       'recommendationReason': recommendationReason,
       'visaInfo': visaInfo,
       'officialUrl': officialUrl,
+      'price': price,
+      'countryCode': countryCode,
     };
   }
 }
@@ -181,17 +251,20 @@ enum EntryMethod {
   qualifying, // 기록컷
 }
 
-// 대회 난이도 enum
+// 대회 난이도 enum (Flat/Rolling/Hilly/Extreme)
 @HiveType(typeId: 2)
 enum Difficulty {
   @HiveField(0)
-  beginner, // 입문
+  beginner, // 입문 (Flat)
 
   @HiveField(1)
-  intermediate, // 중급
+  intermediate, // 중급 (Rolling)
 
   @HiveField(2)
-  advanced, // 기록용
+  advanced, // 상급 (Hilly)
+
+  @HiveField(3)
+  extreme, // 극한 (Extreme)
 }
 
 // 접수 방식 한글 표시명 반환
@@ -213,11 +286,13 @@ extension DifficultyExtension on Difficulty {
   String get displayName {
     switch (this) {
       case Difficulty.beginner:
-        return '입문';
+        return '평평해요';
       case Difficulty.intermediate:
-        return '중급';
+        return '조금 출렁여요';
       case Difficulty.advanced:
-        return '기록용';
+        return '언덕이 많아요';
+      case Difficulty.extreme:
+        return '한계에 가까워요';
     }
   }
 }

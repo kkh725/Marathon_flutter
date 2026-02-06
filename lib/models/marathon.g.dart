@@ -34,13 +34,15 @@ class MarathonAdapter extends TypeAdapter<Marathon> {
       recommendationReason: fields[14] as String?,
       visaInfo: fields[15] as String,
       officialUrl: fields[16] as String,
+      price: fields[17] as String? ?? '',
+      countryCode: fields[18] as String? ?? '',
     );
   }
 
   @override
   void write(BinaryWriter writer, Marathon obj) {
     writer
-      ..writeByte(17)
+      ..writeByte(19)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -74,7 +76,11 @@ class MarathonAdapter extends TypeAdapter<Marathon> {
       ..writeByte(15)
       ..write(obj.visaInfo)
       ..writeByte(16)
-      ..write(obj.officialUrl);
+      ..write(obj.officialUrl)
+      ..writeByte(17)
+      ..write(obj.price)
+      ..writeByte(18)
+      ..write(obj.countryCode);
   }
 
   @override
@@ -142,6 +148,8 @@ class DifficultyAdapter extends TypeAdapter<Difficulty> {
         return Difficulty.intermediate;
       case 2:
         return Difficulty.advanced;
+      case 3:
+        return Difficulty.extreme;
       default:
         return Difficulty.beginner;
     }
@@ -156,6 +164,8 @@ class DifficultyAdapter extends TypeAdapter<Difficulty> {
         writer.writeByte(1);
       case Difficulty.advanced:
         writer.writeByte(2);
+      case Difficulty.extreme:
+        writer.writeByte(3);
     }
   }
 
